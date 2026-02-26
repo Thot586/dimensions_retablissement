@@ -352,6 +352,39 @@ body {
 }
 
 /* ============================================================
+   ACCESSIBILITÉ — Focus visible + Mouvement réduit
+   ============================================================ */
+
+/* Focus visible pour la navigation clavier */
+.btn:focus-visible,
+.footer-toggle:focus-visible,
+.footer-close:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+}
+
+/* Mouvement réduit : désactive TOUTES les animations et transitions */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .modal-enter-active,
+    .modal-exit-active,
+    .collapse-enter-active,
+    .collapse-exit-active {
+        transition: none !important;
+    }
+
+    .footer-panel {
+        transition: none !important;
+    }
+}
+
+/* ============================================================
    TOOLTIP DE SURVOL — Neumorphism
    ============================================================ */
 

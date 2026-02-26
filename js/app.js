@@ -193,10 +193,13 @@ function updatePhysics(state) {
             });
         }
     } else if (!state.isCollapsed && state.isInteractive) {
-        // Léger balancement naturel (respiration)
-        var time = Date.now() * 0.001;
-        state.boardGroup.rotation.x = Math.sin(time) * 0.02;
-        state.boardGroup.rotation.z = Math.cos(time * 0.8) * 0.02;
+        // Léger balancement naturel (respiration) — désactivé si mouvement réduit
+        var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReducedMotion) {
+            var time = Date.now() * 0.001;
+            state.boardGroup.rotation.x = Math.sin(time) * 0.02;
+            state.boardGroup.rotation.z = Math.cos(time * 0.8) * 0.02;
+        }
     }
 }
 
@@ -338,8 +341,13 @@ function createBoardTopTexture(woodImg) {
     canvas.width = 1024;
     canvas.height = 1024;
 
-    // Texture bois photographique
-    ctx.drawImage(woodImg, 0, 0, 1024, 1024);
+    // Texture bois photographique (ou fallback couleur unie)
+    if (woodImg) {
+        ctx.drawImage(woodImg, 0, 0, 1024, 1024);
+    } else {
+        ctx.fillStyle = '#c4a56e';
+        ctx.fillRect(0, 0, 1024, 1024);
+    }
 
     // Texte "Rétablissement" × 4, effet pyrographie (gravure au feu)
     ctx.font = 'bold 58px Georgia, "Times New Roman", serif';
@@ -351,27 +359,58 @@ function createBoardTopTexture(woodImg) {
         ctx.translate(512, 512);
         ctx.rotate(Math.PI + i * Math.PI / 2);
 
-        // Passe 1 : Halo de chaleur
-        ctx.shadowColor = 'rgba(80, 40, 0, 0.6)';
-        ctx.shadowBlur = 12;
+        var textY = 320;
+        var textStr = 'Rétablissement';
+
+        // Passe 0 : Ombre portée (profondeur de gravure)
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.01)';
+        ctx.fillText(textStr, 0, textY);
+
+        // Passe 1 : Halo de chaleur (élargi)
+        ctx.shadowColor = 'rgba(90, 45, 0, 0.5)';
+        ctx.shadowBlur = 18;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
-        ctx.fillStyle = 'rgba(30, 15, 0, 0.7)';
-        ctx.fillText('Rétablissement', 0, 320);
+        ctx.fillStyle = 'rgba(40, 18, 0, 0.55)';
+        ctx.fillText(textStr, 0, textY);
 
-        // Passe 2 : Texte carbonisé + micro-profondeur
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        ctx.shadowBlur = 2;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 1;
-        ctx.fillStyle = 'rgba(20, 8, 0, 0.85)';
-        ctx.fillText('Rétablissement', 0, 320);
-
-        // Passe 3 : Reflet lumineux (bord supérieur)
+        // Passe 2 : Contour brûlé (bords plus foncés que le centre)
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
-        ctx.fillStyle = 'rgba(180, 140, 80, 0.12)';
-        ctx.fillText('Rétablissement', 0, 319);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(10, 4, 0, 0.7)';
+        ctx.strokeText(textStr, 0, textY);
+
+        // Passe 3 : Texte carbonisé (mode multiply → grain du bois transparaît)
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = 'rgba(25, 10, 0, 0.88)';
+        ctx.fillText(textStr, 0, textY);
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Passe 4 : Bruit granuleux (texture carbonisée)
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(-300, textY - 35, 600, 70);
+        ctx.clip();
+        for (var n = 0; n < 100; n++) {
+            var nx = (Math.random() - 0.5) * 500;
+            var ny = textY + (Math.random() - 0.5) * 45;
+            var nr = Math.random() * 2 + 0.5;
+            ctx.globalAlpha = 0.06 + Math.random() * 0.06;
+            ctx.fillStyle = Math.random() > 0.5 ? 'rgb(60, 30, 0)' : 'rgb(0, 0, 0)';
+            ctx.beginPath();
+            ctx.arc(nx, ny, nr, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // Passe 5 : Reflet lumineux (bord supérieur)
+        ctx.fillStyle = 'rgba(180, 140, 80, 0.15)';
+        ctx.fillText(textStr, 0, textY - 1);
 
         ctx.restore();
     }
@@ -479,9 +518,36 @@ function setupInteraction(camera, state) {
 
     footerToggle.addEventListener('click', function () {
         footerPanel.classList.add('open');
+        footerClose.focus();
     });
     footerClose.addEventListener('click', function () {
         footerPanel.classList.remove('open');
+        footerToggle.focus();
+    });
+
+    // Navigation clavier (accessibilité)
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            var infoModal = document.getElementById('info-modal');
+            var collapseModal = document.getElementById('collapse-modal');
+
+            // Fermer le footer s'il est ouvert
+            if (footerPanel.classList.contains('open')) {
+                footerPanel.classList.remove('open');
+                footerToggle.focus();
+                return;
+            }
+            // Fermer la modale info si visible
+            if (!infoModal.classList.contains('hidden')) {
+                closeModal(state);
+                return;
+            }
+            // Fermer la modale d'effondrement si visible
+            if (!collapseModal.classList.contains('hidden')) {
+                handleReset(state);
+                return;
+            }
+        }
     });
 }
 
@@ -607,6 +673,11 @@ function openModal(data, state) {
     modal.classList.add('modal-enter');
     void modal.offsetWidth; // force reflow
     modal.classList.add('modal-enter-active');
+
+    // Focus sur le premier bouton (accessibilité clavier)
+    setTimeout(function () {
+        document.getElementById('btn-close-modal').focus();
+    }, 50);
 }
 
 function closeModal(state) {
@@ -637,6 +708,11 @@ function removePillar(state) {
         collapseModal.classList.add('collapse-enter');
         void collapseModal.offsetWidth;
         collapseModal.classList.add('collapse-enter-active');
+
+        // Focus sur le bouton restaurer (accessibilité clavier)
+        setTimeout(function () {
+            document.getElementById('btn-restore').focus();
+        }, 50);
     }, 2500);
 }
 
@@ -684,6 +760,11 @@ function init() {
     var woodImg = new Image();
     woodImg.onload = function () {
         initScene(woodImg);
+    };
+    woodImg.onerror = function () {
+        // Fallback : couleur unie si la texture ne charge pas
+        console.warn('Texture bois non chargée — utilisation du fallback couleur unie.');
+        initScene(null);
     };
     woodImg.src = WOOD_TEXTURE_B64;
 }

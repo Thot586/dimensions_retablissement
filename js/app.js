@@ -341,9 +341,8 @@ function createBoardTopTexture(woodImg) {
     // Texture bois photographique
     ctx.drawImage(woodImg, 0, 0, 1024, 1024);
 
-    // Texte "Rétablissement" × 4, contraste renforcé
+    // Texte "Rétablissement" × 4, effet pyrographie (gravure au feu)
     ctx.font = 'bold 58px Georgia, "Times New Roman", serif';
-    ctx.fillStyle = 'rgba(60, 35, 10, 0.5)';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -351,7 +350,29 @@ function createBoardTopTexture(woodImg) {
         ctx.save();
         ctx.translate(512, 512);
         ctx.rotate(Math.PI + i * Math.PI / 2);
+
+        // Passe 1 : Halo de chaleur
+        ctx.shadowColor = 'rgba(80, 40, 0, 0.6)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = 'rgba(30, 15, 0, 0.7)';
         ctx.fillText('Rétablissement', 0, 320);
+
+        // Passe 2 : Texte carbonisé + micro-profondeur
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 2;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 1;
+        ctx.fillStyle = 'rgba(20, 8, 0, 0.85)';
+        ctx.fillText('Rétablissement', 0, 320);
+
+        // Passe 3 : Reflet lumineux (bord supérieur)
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(180, 140, 80, 0.12)';
+        ctx.fillText('Rétablissement', 0, 319);
+
         ctx.restore();
     }
 

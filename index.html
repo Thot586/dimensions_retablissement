@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Les 4 Dimensions du Rétablissement — Visualisation 3D Interactive</title>
+    <meta name="description" content="Visualisation 3D interactive des 4 dimensions du rétablissement en santé mentale (van der Stel, 2012 ; Franck, 2018).">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <!-- Conteneur WebGL -->
+    <div id="canvas-container"></div>
+
+    <!-- Couche UI par-dessus la 3D -->
+    <div id="ui-layer">
+
+        <!-- En-tête -->
+        <header class="header interactive-ui">
+            <h1>L'Équilibre du Rétablissement</h1>
+            <p>Cliquez sur un pilier (sphère) pour explorer sa dimension. Supprimez-en un pour observer l'impact systémique.</p>
+        </header>
+
+        <!-- Modale de détails du pilier -->
+        <div id="info-modal" class="modal interactive-ui hidden modal-enter">
+            <div class="modal-header">
+                <div id="modal-color-indicator" class="modal-color-dot"></div>
+                <h2 id="modal-title" class="modal-title">Titre</h2>
+            </div>
+            <p id="modal-desc" class="modal-desc">Description...</p>
+            <div class="modal-actions">
+                <button id="btn-close-modal" class="btn btn-ghost">Fermer</button>
+                <button id="btn-remove-pillar" class="btn btn-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Retirer ce pilier
+                </button>
+            </div>
+        </div>
+
+        <!-- Modale d'effondrement -->
+        <div id="collapse-modal" class="collapse-modal interactive-ui hidden collapse-enter">
+            <h3 class="collapse-title">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Déséquilibre Systémique !
+            </h3>
+            <p id="collapse-reason" class="collapse-reason">Raison...</p>
+            <p class="collapse-note">Le rétablissement est un processus holistique. L'absence d'une seule dimension compromet la stabilité de l'ensemble de l'édifice.</p>
+            <button id="btn-restore" class="btn btn-dark">
+                Restaurer l'équilibre
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Tooltip de survol -->
+    <div id="hover-tooltip" class="hover-tooltip hidden">
+        <div class="tooltip-header">
+            <div id="tooltip-dot" class="tooltip-dot"></div>
+            <span id="tooltip-title" class="tooltip-title">Titre</span>
+        </div>
+        <p id="tooltip-desc" class="tooltip-desc">Description courte...</p>
+    </div>
+
+    <!-- Instructions (bas droite) -->
+    <div class="instructions">
+        <p>Cliquez sur un pilier pour voir les détails</p>
+        <p>Utilisez la souris pour tourner la scène</p>
+    </div>
+
+    <!-- Bouton pour ouvrir le footer -->
+    <button id="footer-toggle" class="footer-toggle">Crédits & Références</button>
+
+    <!-- Footer panel (slide-up) -->
+    <div id="footer-panel" class="footer-panel">
+        <div class="footer-sticky-bar">
+            <span class="footer-sticky-title">Crédits & Références</span>
+            <button id="footer-close" class="footer-close" aria-label="Fermer">&times;</button>
+        </div>
+
+        <div class="footer-content">
+
+            <!-- Crédits -->
+            <div class="credits">
+                <h3 class="footer-section-title">Crédits</h3>
+                <p><span class="credit-name">Dr T.J. Félicien FENOHASINA </span> | Psychiatre | Développeur d'application Web</p>
+                <p><span class="credit-name">Cynthia BEGUE  </span>| </p>
+                <p><span class="credit-name">Prof. Nicolas FRANCK</span>| PU-PH</p>
+                <p style="margin-top: 8px; font-style: italic;">Modèle adapté de van der Stel (2012)</p>
+            </div>
+
+            <!-- Logos partenaires -->
+            <div class="footer-logos">
+                <a href="https://centre-ressource-rehabilitation.org" target="_blank" rel="noopener noreferrer" class="footer-logo-link">
+                    <img src="logo/crr.jpg" alt="Logo Centre Ressource Réhabilitation">
+                    <span>Centre Ressource Réhabilitation</span>
+                </a>
+                <a href="https://www.facebook.com/Psykozy?locale=fr_FR" target="_blank" rel="noopener noreferrer" class="footer-logo-link">
+                    <img src="logo/psykozy.png" alt="Logo Psy-kôzy Madagascar">
+                    <span>Psy-kôzy Madagascar</span>
+                </a>
+            </div>
+
+            <!-- Références -->
+            <h3 class="footer-section-title">Références</h3>
+            <ol class="references-list">
+                <li>
+                    <span class="ref-authors">van der Stel, J. C. (2012).</span>
+                    <span class="ref-title">Focus op persoonlijk herstel bij psychische problemen.</span>
+                    Boom Lemma.
+                    <br>
+                    <a href="https://www.bol.com/nl/nl/f/focus-op-persoonlijk-herstel-bij-psychische-problemen/9200000006905598/" target="_blank" rel="noopener noreferrer">Consulter l'ouvrage</a>
+                </li>
+                <li>
+                    <span class="ref-authors">van der Stel, J. (2013).</span>
+                    Innovatie rond herstel.
+                    <span class="ref-title">Verslaving, 9</span>(4), 5–18.
+                    <br>
+                    <a href="https://doi.org/10.1007/s12501-013-0032-9" target="_blank" rel="noopener noreferrer">https://doi.org/10.1007/s12501-013-0032-9</a>
+                </li>
+                <li>
+                    <span class="ref-authors">Franck, N. (Dir.). (2026).</span>
+                    <span class="ref-title">Traité de réhabilitation psychosociale</span> (2e éd.).
+                    Elsevier Masson.
+                    <br>
+                    <a href="https://www.elsevier-masson.fr/traite-de-rehabilitation-psychosociale-9782294787843.html" target="_blank" rel="noopener noreferrer">Consulter l'ouvrage</a>
+                </li>
+                <li>
+                    <span class="ref-authors">Anthony, W. A. (1993).</span>
+                    Recovery from mental illness: The guiding vision of the mental health service system in the 1990s.
+                    <span class="ref-title">Psychosocial Rehabilitation Journal, 16</span>(4), 11–23.
+                    <br>
+                    <a href="https://doi.org/10.1037/h0095655" target="_blank" rel="noopener noreferrer">https://doi.org/10.1037/h0095655</a>
+                </li>
+                <li>
+                    <span class="ref-authors">Leamy, M., Bird, V., Le Boutillier, C., Williams, J., & Slade, M. (2011).</span>
+                    Conceptual framework for personal recovery in mental health: Systematic review and narrative synthesis.
+                    <span class="ref-title">The British Journal of Psychiatry, 199</span>(6), 445–452.
+                    <br>
+                    <a href="https://doi.org/10.1192/bjp.bp.110.083733" target="_blank" rel="noopener noreferrer">https://doi.org/10.1192/bjp.bp.110.083733</a>
+                </li>
+                <li>
+                    <span class="ref-authors">Slade, M. (2009).</span>
+                    <span class="ref-title">Personal recovery and mental illness: A guide for mental health professionals.</span>
+                    Cambridge University Press.
+                    <br>
+                    <a href="https://doi.org/10.1017/CBO9780511581649" target="_blank" rel="noopener noreferrer">https://doi.org/10.1017/CBO9780511581649</a>
+                </li>
+            </ol>
+
+        </div>
+    </div>
+
+    <!-- Point d'entrée JavaScript (ES module) -->
+    <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
